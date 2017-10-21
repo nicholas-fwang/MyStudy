@@ -99,3 +99,308 @@ public class Employee implements Person, Identified {
 <h2>3.3 인터페이스의 예</h2>
 
 <h2>3.3.1 Comparable 인터페이스</h2>
+```java
+class test {
+    public static void main(String[] args) {
+        Employee e1 = new Employee(2.0);
+        Employee e2 = new Employee(1.0);
+        System.out.println(e1.compareTo(e2));
+    }
+}
+
+interface Comparable<T> {
+    int compareTo(T other);
+}
+
+class Employee implements Comparable<Employee> {
+    private double salary;
+
+    public Employee(double salary) {
+        this.salary = salary;
+    }
+
+    @Override
+    public int compareTo(Employee other) {
+        return Double.compare(salary, other.salary);
+    }
+}
+```
+
+<pre>
+어떤 객체가 올지 모르기 때문에 T(타입 파라미터)를 제네릭 파라미터로 사용한다.
+구현 class(Employee)에서 compareTo 메서드를 구현한다.
+private 변수인 salary가 접근 가능하다.
+제네릭 부분에서 다시 봐바야 할듯
+</pre>
+
+<h2>3.3.2 Comparator 인터페이스</h2>
+<pre>
+위 Comparable을 사용해서 sort를 할 수 있다.
+Employee[] employees
+Arrays.sort(employees)
+가 가능하다.
+하지만 Employee가 아닌 String 같이 수정할 수 없는 class라면 다른 방법을 사용해야 한다.
+String의 길이에 따라 정렬을 한다고 생각해보자.
+</pre>
+
+```java
+import java.util.Arrays;
+import java.util.Comparator;
+
+public class Main {
+    public static void main(String[] args) {
+        String[] friends = { "Peter", "Paul", "Mary" };
+        Arrays.sort(friends, new LengthComparator());
+        for(String friend : friends) {
+            System.out.println(friend);
+        }
+    }
+}
+
+class LengthComparator implements Comparator<String> {
+    @Override
+    public int compare(String o1, String o2) {
+        return o1.length() - o2.length();
+    }
+}
+```
+<h2>3.3.3 Runnable 인터페이즈</h2>
+<pre>
+특정 테스크를 별도의 스레드에서 실행하거나 스레드 풀에 넣기 위해 구현해야하는 인터페이스.
+메서드는 한 개만 갖는다.
+</pre>
+
+```java
+import java.util.Arrays;
+import java.util.Comparator;
+
+public class Main {
+    public static void main(String[] args) {
+        Runnable task = new HelloTask();
+        Thread thread = new Thread(task);
+        thread.start();
+    }
+}
+
+class HelloTask implements Runnable {
+    @Override
+    public void run() {
+        for(int i=0; i<1000; i++) {
+            System.out.println("Hello, World");
+        }
+    }
+}
+```
+<h2>3.3.4 사용자 인터페이스 콜백</h2>
+<pre>
+이벤트가 발생했을 때 수행되어야 할 액션을 지정한다.
+Handler라는 이름으로 많이 사용된다.
+T는 이벤트가 발생했을 때 전달될 이벤트 타입이다.
+</pre>
+
+```java
+
+public class Main {
+    public static void main(String[] args) {
+        Button btn = new Button("Cancel");
+        btn.setOnAction(new CancelAction());
+    }
+}
+
+interface EventHandler<T> {
+    void handle(T event);
+}
+
+class CancelAction implements EventHandler<ActionEvent> {
+    public void handle(ActionEvent event) {
+        System.out.println(event.getID());
+    }
+}
+```
+
+<h2>3.4 람다 표현식</h2>
+<h2>3.4.1 람다 표현식 문법</h2>
+<pre>
+자바는 객체 지향 언어다.
+자바에는 함수 타입이 없다.
+그래서 함수를 객체로 표현한다.
+</pre>
+
+```java
+//        Arrays.sort(friends, new LengthComparator());
+        Comparator<String> comp
+                = (first, second) -> first.length() - second.length();
+        Arrays.sort(friends, comp);
+```
+
+<pre>
+Comparator interface에서 구현돼야할 메서드는 compare 하나 뿐이었다.
+compare 메서드는 파라미터가 2개고 타입은 String으로 제네릭에서 지정이 되어있다.
+따라서 compare 함수가 객체로 표현됐다.
+</pre>
+
+```java
+//        Runnable task = new HelloTask();
+        Runnable task = () -> {
+            for(int i=0; i<1000; i++) {
+                System.out.println("Hello World");
+            }
+        };
+```
+
+<pre>
+Runnable interface 역시 run 메서드 하나 뿐이다.
+run 메서드는 파라미터가 없기 때문에 ()가 비어있다.
+</pre>
+
+<h2>함수형 인터페이스</h2>
+<pre>
+Comparator, Runnable 처럼 추상 메서드가 한 개인 인터페이스를 함수형 인터페이스라고 부른다.
+람다는 함수형 인터페이스일 경우에만 사용 가능하다.(함수가 객체로 표현돼야 하기 때문에)
+</pre>
+
+```java
+Arrays.sort(friends, (first, second) -> first.length() - second.length());
+```
+
+<pre>
+따라서 위와 같이 직접 함수 람다식을 넣어도 된다. (원래는 Comparator 객체가 파라미터)
+</pre>
+
+```java
+public interface Predicate<T> {
+  boolean test(T t);
+}
+```
+
+<pre>
+표준 라이브러리에서는 Predicate 함수형 인터페이스가 있다.
+list.removeIf(e -> e == null);
+ArrayList 클래스의 removeIf 메서드는 파라미터로 Predicate를 받는다.
+위 문장은 리스트에서 모든 null 값을 제거한다.
+</pre>
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        ArrayList<String> list = new ArrayList<>();
+        list.add("TEST1");
+        list.add("TEST1");
+        list.add("TEST2");
+        list.add("TEST3");
+        list.add("TEST4");
+        Consumer<String> style = (String s) -> System.out.println(s);
+
+        list.forEach(style);
+
+        Predicate<String> predicate = s -> s.equals("TEST1");
+
+        list.removeIf(predicate);
+
+        System.out.println("After removeIf");
+        list.forEach(style);
+    }
+
+}
+```
+<pre>
+Consumer 역시 함수형 인터페이스를 위한 객체다.
+</pre>
+
+<h2>3.5 메서드 참조와 생성자 참조</h2>
+<h2>3.5.1 메서드 참조</h2>
+<pre>
+함수형 인터페이스가 이미 구현되어 있을 수 있다.
+</pre>
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        String[] strings = new String[] {"TEST1", "TEST2", "test1"};
+
+        consumer(strings);
+
+//        Arrays.sort(strings, (x, y) -> x.compareToIgnoreCase(y));
+        Arrays.sort(strings, String::compareToIgnoreCase);
+
+        System.out.println("After sort");
+        consumer(strings);
+    }
+
+    public static void consumer(String[] strings) {
+        for(String s : strings) {
+            System.out.println(s);
+        }
+    }
+
+}
+```
+
+<pre>
+String::compareToIgnoreCase 는 대소문자를 상관안하고 정렬하는 함수형 인터페이스다.
+</pre>
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add("TEST");
+        strings.add("TEST");
+        strings.add("TEST");
+        strings.add(null);
+        strings.add(null);
+
+        consumer(strings);
+
+//        strings.removeIf(s -> s == null);
+        strings.removeIf(Objects::isNull);
+        System.out.println("After");
+        consumer(strings);
+    }
+
+    public static void consumer(String[] strings) {
+        for(String s : strings) {
+            System.out.println(s);
+        }
+    }
+
+    public static void consumer(List<String> strings) {
+        for(String s : strings) {
+            System.out.println(s);
+        }
+    }
+}
+```
+
+<pre>
+Objects:isNull 은 값이 null인지 확인하는 메서드다.
+list.forEach(System.out::println);
+
+:: 연산자는 메서드 이름과 클래스를 분리하거나, 메서드 이름과 객체 이름을 분리한다.
+
+1. 클래스::인스턴스메서드
+(x,y) -> x.compareToIgnoreCase(y)
+==> String::compareToIgnoreCase
+첫 번째 파라미터가 메서드의 수신자가 되고 나머지는 해당 메서드로 전달
+
+2. 클래스::정적메서드 (Objects:isNull)
+x -> Objects.isNull(x)
+==> Objects:isNull
+모든 파라미터가 정적 메서드로 전달
+
+3. 객체::인스턴스메서드
+System.out.println(x)
+==> System.out::println
+주어진 객체의 메서드가 호출되고, 파라미터는 인스턴스 메서드로 전달
+</pre>
+
+<h2>3.5.2 생성자 참조</h2>
+<pre>
+Stream<Employee> stream = names.stream().map(Employee::new);
+new라는 메서드 이름을 사용한다.
+</pre>
+
+<h2>3.6 람다 표현식 처리하기</h2>
+<h2>3.6.1 지연 실행 구현하기
