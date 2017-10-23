@@ -404,3 +404,105 @@ new라는 메서드 이름을 사용한다.
 
 <h2>3.6 람다 표현식 처리하기</h2>
 <h2>3.6.1 지연 실행 구현하기
+<pre>
+람다는 사용하는 목적은 지연 실행이다.
+- 별도의 스레드에서 코드 실행
+- 코드를 여러번 실행
+- 알고리즘의 올바른 지점에서 코드 실행
+- 이벤트(클릭, 데이터 수신..)가 일어날 때 코드 실행
+- 필요할 때만 코드 실행
+</pre>
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        repeat(10, () -> System.out.println("Hello, World"));
+    }
+    public static void repeat(int n, Runnable action) {
+        for(int i=0; i<n; i++) action.run();
+    }
+}
+```
+
+<pre>
+액션을 n번 반복하기 위해 카운트와 액션을 전달한다.
+액션은 함수다. 하지만 자바는 함수를 전달할 수 없다.
+그래서 단일 메서드를 가진 Runnable 인터페이스를 파라미터로 한다.
+파라미터에서 구현한 람다 함수는 Runnable의 run 메서드에서 실행된다.
+</pre>
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        repeat(10, i -> System.out.println("Countdown: " + (9-i)));
+    }
+
+    public static void repeat(int n, IntCounsmer action) {
+        for(int i=0; i<n; i++) action.accept(i);
+    }
+}
+
+interface IntCounsmer {
+    void accept(int value);
+}
+```
+
+<pre>
+몇번째 반복 수행인지를 알고 싶을 때 위처럼 개선하면 된다.
+직접 구현보다는 제공되는 준 함수형 인터페이스를 사용하는 것이 좋다.
+</pre>
+
+```java
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+public class Main {
+    public static void main(String[] args) {
+        BufferedImage frenchFlag = createImage(150, 100, (x, y) -> x < 50 ? Color.BLUE : x < 100 ? Color.WHITE : Color.RED);
+    }
+
+    public static BufferedImage createImage(int width, int height, PixelFunction f) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_BGR);
+
+       for(int x=0; x<width; x++) {
+          for(int y=0; y<height; y++) {
+               Color color = f.apply(x, y);
+               image.setRGB(x, y, color.getRGB());
+          }
+       }
+       return image;
+   }
+}
+
+@FunctionalInterface
+interface PixelFunction {
+    Color apply(int x, int y);
+}
+```
+
+<pre>
+위처럼 함수형 인터페이스를 anootation을 이용해서 직접 만들 수도 있다.
+파라미터로 int, int를 받고 Color를 반환하고 싶을 때 적당한 내부 함수형 인터페이스가 없기 때문에 만들었다.
+하는 역할은 x,y 좌표에 Color를 반환해주고 createImage를 호출할 때 좌표에 맞는 Color를 지정하는 함수를 구현한다.
+</pre>
+
+<h2>3.7 람다 표현식과 변수 유효 범위</h2>
+
+<pre>
+람다 표현식에서 변수명을 조심하자
+int first = 0;
+Comparator<String> comp = (first, second) -> first.length() - second.length();
+// first 변수명이 이미 정의됐다.
+
+public class Application {
+  public void doWork() {
+      Runnable runner = () -> { ...; System.out.println(this.toString()); ... };
+      ...
+  }
+}
+
+여기서 this는 Application을 가리킨다. Runnable 인스턴스가 아니다.
+함수형 인터페이스로 run 메서드 안 this가 아니다.
+</pre>
+
+
