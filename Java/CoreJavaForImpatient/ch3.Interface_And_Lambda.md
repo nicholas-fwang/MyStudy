@@ -99,6 +99,7 @@ public class Employee implements Person, Identified {
 <h2>3.3 인터페이스의 예</h2>
 
 <h2>3.3.1 Comparable 인터페이스</h2>
+
 ```java
 class test {
     public static void main(String[] args) {
@@ -136,8 +137,14 @@ private 변수인 salary가 접근 가능하다.
 <h2>3.3.2 Comparator 인터페이스</h2>
 <pre>
 위 Comparable을 사용해서 sort를 할 수 있다.
+</pre>
+
+```java
 Employee[] employees
 Arrays.sort(employees)
+```
+
+<pre>
 가 가능하다.
 하지만 Employee가 아닌 String 같이 수정할 수 없는 class라면 다른 방법을 사용해야 한다.
 String의 길이에 따라 정렬을 한다고 생각해보자.
@@ -506,3 +513,77 @@ public class Application {
 </pre>
 
 
+<h2>3.7.2 바깥쪽 유효 범위에 속한 변수 접근하기</h2>
+
+<pre>
+종종 람다 표현식에서 자신을 감싼 메서드나 클래스에 속한 변수에 접근하고 싶을 때가 있다.
+</pre>
+
+```java
+public static void repeatMessage(String text, int count) {
+  Runnable r = () -> {
+    for(int i=0; i<count; i++) {
+      System.out.println(text);
+    }
+  };
+  new Thread(r).start();
+}
+```
+
+<pre>
+여기서 메서드의 파라미터인 text, count가 람다식 안에서 쓰였다.
+람다식은 3가지로 구성된다.
+1. 코드 블록
+2. 파라미터
+3. 자유 변수들의 값
+text와 count는 자유 변수들의 값에 속한다.
+이런 자유 변수 값을 사용하는 코드를 클로저(closure)라고 한다.
+자바에서는 람다 표현식이 클로저다.
+또한 이렇게 유호 범위에 속한 변수의 값을 '캡처'한다고 한다.
+대신 이 값은 변하면 안된다. (과거에는 final로만 해야했다.)
+쓰레드의 안정성을 보장하지 않기 때문
+</pre>
+
+<h2>고차 함수</h2>
+<h2>함수를 반환하는 메서드</h2>
+<pre>
+함수형 프로그래밍에서 함수가 일차 구성원
+함수를 처리하거나 반환하는 함수를 고차 함수라고 한다.
+실전에서 매우 유용함
+</pre>
+
+```java
+public static Comparator<String> compareInDirection(int direction) {
+  return (x, y) -> direction * x.compareTo(y);
+}
+```
+
+<pre>
+direction 값에 따라 문자열의 배열을 오름차순, 내림차순으로 정렬할 수 있는 Comparator를 반환한다.
+</pre>
+
+```java
+Arrays.sort(friends, compareInDirection(-1));
+```
+
+<h2>함수를 수정하는 메서드</h2>
+<pre>
+앞에서는 함수를 반환했다(comparator)
+이번엔 함수를 파라미터로 받아보자.
+</pre>
+
+```java
+public static Comparator<String> reverse(Comparator<String> comp) {
+  return (x, y) -> comp.compare(y, x);
+}
+```
+
+<pre>
+함수를 인자로 받아서 그 함수를 수정하고 반환한다.
+예를들어 대소문자를 가리지 않는 함수를 입력받으면 그걸 뒤집어 반환한다.
+이걸 이용한다면 대소문자를 가리지 않는 내림차순 비교자를 얻을 수 있다.
+</pre>
+
+```java
+Arrays.sort(friends, reverse(String::compareToIgnoreCase));
+```
