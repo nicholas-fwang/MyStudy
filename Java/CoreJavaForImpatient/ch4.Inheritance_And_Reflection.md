@@ -298,3 +298,157 @@ enum Modifier {
 ```
 
 <h2>4.4 실행 시간 타입 정보와 리소스</h2>
+<pre>
+자바에서는 실행 시간에 객체가 어느 클래스에 속하는지 알아낼 수 있다.
+equals나 toString 메서드 구현 시 유용하고
+클래스를 어떻게 로드했는지 알아내어 클래스와 관련된 데이터, 즉 리소스를 로드할 수도 있다.
+</pre>
+
+<h2>4.4.1 Class 클래스</h2>
+
+<pre>
+객체의 참조를 저장하는 Object 타입의 변수가 있다.
+이 변수에서 객체의 더 많은 정보(객체가 속한 클래스 등..)를 얻고 싶다고 해보자.
+</pre>
+
+```java
+Object obj = ...;
+Class<?> cl = obj.getClass();
+```
+
+<pre>
+generic은 추후에 하자.
+getName()을 통해 클래스의 이름을 알아낼 수 있다.
+</pre>
+
+```java
+System.out.println("This is object is an instance of " + cl.getName());
+
+// 정적 메서드 Class.forName을 사용해서 얻을 수도 있다.
+String className = "java.util.Scanner";
+Class<?> cl = Class.forName(className);
+```
+
+<pre>
+Class.forName의 용도는 컴파일 시간에는 알려지지 않은 클래스의 Class 객체를 생성하는 것이다.
+원하는 클래스를 미리 알고 싶으면 Class.forName 대신 클래스 리터럴을 사용하자.
+</pre>
+
+```java
+Class<?> cl = java.util.Scanner.class;
+Class<?> cl2 = String[].class // String[] 배열 타입을 작성한다.
+Class<?> cl3 = Runnable.class // Runnable 인터페이스를 작성한다.
+
+// equals 메서드
+if(other.getClass() == Employee.class)
+```
+
+<h2>4.4.2 리소스 로드하기</h2>
+<pre>
+Class 클래스를 이용해 config 파일이나 image 등 리소스를 찾아올 수 있다.
+클래스 파일과 같은 디렉터리에 리소스를 넣었을 때 다음과 같이 해당 파일에 대응하는 입력스트림을 열 수 있다.
+</pre>
+
+```java
+InputStream stream = MyClass.class.getResourceAsStream("config.txt");
+Scanner in = new Scanner(stream);
+```
+
+<pre>
+리소스에는 서브 디렉터리가 포함될 수 있다.
+상대경로나 절대경로로 지정할 수도 있다.
+MyClass.class.getResourceAsStream("/config/menus.txt")
+는 MyClass가 속한 패키지의 루트를 담고 있는 디렉터리에서 config/menus.txt를 찾는다.
+</pre>
+
+<h2>4.3.3 클래스 로더</h2>
+<pre>
+가상 머신에서는 명령어를 클래스 파일에 저장한다.
+각 클래스 파일에는 단일 클래스나 인터페이스에 해당하는 명령어를 담는다.
+클래스 파일은 file system, JAR, Remote, 메모리 등에서 동적으로 생성할 수도 있다.
+클래스 로더는 바이트를 로드해서 가상 머신의 클래스나 인터페이스로 변환하는 역할을 한다.
+</pre>
+
+<pre>
+가상머신은 main 메서드가 호출될 메인 class부터 시작해 필요할 때 클래스 파일을 로드한다.
+메인 class에서 java.lang.System이나 java.util.Scanner 같은 클래스를 사용한다면 이 클래스를 로드하고
+이 클래스들이 각 의존 클래스를 로드한다.
+</pre>
+
+<pre>
+자바 프로그램을 실행할 때 최소 3가지 클래스 로더가 연관된다.
+1. 부트스트랩 로더 : 자바 라이브러리 클래스를 로드한다. 보통은 jre/lib/rt.jar 파일에서 로드
+부트스트랩 로더는 가상 머신의 일부다.
+2. 확장 클래스 로더 : jre/lib/ext 디렉터리에서 '표준 확장'을 로드한다.
+3. 시스템 클래스 로더 : 애플리케이션 클래스를 로드한다. 또한 클래스 패스에 있는 디렉터리와 JAR 파일에서 클래스를 찾는다.
+</pre>
+
+<pre>
+부트스트랩 클래스 로더에 대응하는 ClassLoader 객체는 없다.
+예를들면 String.class.getClassLoader()는 null을 반환한다.
+자바 구현에서는 확장 클래스 로더와 시스템 클래스 로더로 자바를 구현한다.
+두 클래스 모두 URLClassLoader 클래스의 인스턴스다.
+
+자신만의 URLClassLoader 인스턴스를 생성하면 클래스 패스에 없는 디렉터리나 JAR 파일에 클래스를 로드할 수 있다.
+플러그인을 로드할 때 이 방법을 이용한다.
+</pre>
+
+```java
+URL[] = urls {
+    new URL("file:///path/to/directory/"),
+    new URL("file://path/to/jarfile.jar")
+};
+String className = "com.mycompany.plugins.Entry";
+try (URLClassLoader loader = new URLClassLoader(urls)) {
+    Class<?> cl = Class.forName(className, true, loader);
+    // 이제 cl 인스턴스를 생성한다 (4.5.4)
+}
+```
+
+<pre>
+Class.forName의 두번째 파라미터(true)는 대상 클래스르 로드한 후 정적 초기화가 일어남을 보장한다.
+
+URLClassLoader는 파일 시스템에서 클래스를 로드한다.
+다른 곳에서 클래스를 로드하려면 자신만의 클래스 로더를 구현해야 한다. 클래스 로더는 findClass 메서드만 구현하면 된다.
+</pre>
+
+```java
+public class MyClassLoader extends ClassLoader {
+    ...
+    @Override
+    public Class<?> findClass(String name)
+      throws ClassNotFoundException {
+      byte[] bytes = "the byte of the class file";
+      return defineClass(name, bytes, 0, bytes.length);
+    }
+}
+```
+
+<h2>4.4.4 컨텍스트 클래스 로더</h2>
+<pre>
+대부분은 클래스 로딩 과정을 신경 쓰지 않아도 된다.
+메서드가 클래스를 동적으로 로드하는데 또 다른 클래스 로더가 로드한 클래스에서 이 메서드를 호출하면
+문제가 생길 수 있다.
+그 예를 보자.
+</pre>
+
+<pre>
+1. 시스템 클래스 로더가 로드하는 유틸리티 클래스를 만들었다.
+</pre>
+
+```java
+public class Util {
+    Object createInstance(String className) {
+        Class<?> cl = Class.forName(className);
+    }
+}
+```
+
+<pre>
+2. 또 다른 클래스 로더(사용자가 만든 클래스 로더)가 플러그인 JAR에서 클래스를 읽어오는 플로그인을 로드한다.
+
+3. 이 플러그인은 Util.createInstance("com.mycompany.plugins.MyClass")를 호출해서
+플러그인 JAR에 들어 있는 클래스의 인스턴스를 생성한다.
+
+
+</pre>
