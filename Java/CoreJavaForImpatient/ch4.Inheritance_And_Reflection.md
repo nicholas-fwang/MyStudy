@@ -450,5 +450,110 @@ public class Util {
 3. 이 플러그인은 Util.createInstance("com.mycompany.plugins.MyClass")를 호출해서
 플러그인 JAR에 들어 있는 클래스의 인스턴스를 생성한다.
 
+즉, 플러그인 클래스 로더가 내부 클래스 로더의 클래스에 접근해야 된다.
+플러그인 클래스 로더는 자신의 로더를 이용해 해당 클래스를 로드하려 하기 때문에 에러가 발생한다.
+이런 현상을 클래스 로더 역전이라고 한다.
 
+이를 해결 하기 위해서 클래스 로더를 같이 전달해야 한다.
+</pre>
+
+```java
+public class Util {
+    public Object createInstance(String className, ClassLoader loader) {
+        Class<?> cl = Class.forname(className, true, loader);
+        ...
+    }
+    ...
+}
+```
+
+<pre>
+또 다른 방법은 현재 스레드의 컨텍스트 클래스 로더를 사용하는 것이다.
+메인 스레드 클래스 로더 -> 시스템 클래스 로더
+새 스레드에 별도 처리를 하지마 않으면 모두 새로운 스레드 역시 시스템 클래스 로더를 바라본다.
+</pre>
+
+```java
+Thread t = Thread.currentThread();
+t.setContextClassLoader(loader);
+```
+
+```java
+public class Util {
+    public Object createInstance(String className) {
+        Thread t = Thread.currentThread();
+        ClassLoader loader = t.getContextClassLoader();
+        Class<?> cl = Class.forname(className, true, loader);
+        ...
+    }
+    ...
+}
+```
+
+<h2>4.4.5 서비스 로더</h2>
+<pre>
+프로그램에서 플러그인을 구현할 때 ServiceLoader 클래스를 이용해 공통 인터페이스를 준수하는 플러그인을 손쉽게 로드할 수 있다.
+서비스의 각 인스턴스에서 제공해야 하는 메서드를 포함하는 인터페이스(또는 슈퍼클래스)를 정의한다.
+
+예를 들어 암호화 제공 서비스
+</pre>
+
+```java
+package com.corejava.crypt;
+
+public interface Cipher {
+    byte[] encrypt(byte[] source, byte[] key);
+    byte[] decrypt(byte[] source, byte[] key);
+    int strength();
+}
+```
+
+<pre>
+서비스 제공자는 이 서비스를 구현하는 클래스를 하나 이상 제공
+</pre>
+
+```java
+package com.corejava.crypt.impl;
+
+public class CaeserCihper implements Cipher {
+    byte[] encrypt(byte[] source, byte[] key) {
+        ...
+    }
+    byte[] decrypt(byte[] source, byte[] key) {
+        ...
+    }
+    int strength() {
+        ...
+    }
+}
+```
+
+<pre>
+구현 클래스의 패키지는 인터페이스에 제한되지 않는다.
+인자없는 생성자는 필수다
+
+UTF-8 방식으로 인코드된 텍스트 파일에 클래스 이름을 추가한다.
+(META-INF/services 디렉토리)
+META-INF/services/com.corejava.crypt.impl.CaeserCihper
+
+프로그램에서 다음과 같이 서비스 로더를 초기화 한다.
+</pre>
+
+```java
+public static ServiceLoader<Cipher> cipherLoader = ServiceLoader.load(Cipher.class);
+
+public static Cihper getCipher(int minStrength) {
+    for(Cipher cipher : cihperLoader)
+        if(cihper.strength() >= minStrength) return cipher;
+    return null;
+}
+```
+
+<pre>
+TODO : ServiceLoader로 배포한 플러그인 따라해보기
+</pre>
+
+<h2>4.5 리플렉션</h2>
+<pre>
+SKIP
 </pre>
