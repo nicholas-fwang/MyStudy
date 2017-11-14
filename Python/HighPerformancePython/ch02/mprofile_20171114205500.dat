@@ -1,0 +1,2 @@
+CMDLINE /Users/inki/anaconda/bin/python julia1_memoryprofiler.py --python=python3
+MEM 0.253906 1510660500.8696
